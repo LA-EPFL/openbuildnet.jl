@@ -108,22 +108,22 @@ function do_updatex(node::OBNNode, mask::OBNUpdateMask)
 end
 
 # Run simulation
+# if stopIfTimeout is true [default], the node will automatically  stop if there is a timeout error
 # Returns: 1 if timeout; 2 if the simulation stopped properly; 3 if stopped with an error
 import Base.run
 function run(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = true)
   @assert node.valid "Node is not valid."
 
-  # if any(hasError(this))
-  #                 error('OBNNode:runSimulation', 'Node(s) currently has/have error and cannot run; please clear the error first by calling stopSimulation.');
-  #             end
+  if iserror(node)
+    error("Node currently has error and cannot run; clear the error first by calling stopSimulation.")
+  end
 
-  # % If the node is running --> may be not right, give a warning
-  # if any(isRunning(this))
-  #     warning('OBNNode:runSimulation', 'Node(s) is/are currently running; may be an error but we will run it anyway.');
-  # end
+  # If the node is running --> may be not right, give a warning
+  if isrunning(node)
+    warn("Node is currently running; may be an error but we will run it anyway.")
+  end
 
   # timeoutStart = tic;
-  # drawnowStart = timeoutStart;    % to allow drawnow() every now and then, not too often
 
   event_type = Ref{OBNEI_EventType}()
   event_args = Ref{OBNEI_EventArg}()
@@ -158,6 +158,7 @@ function run(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = true)
       warn("Simulation has timed out.")
       if stopIfTimeout
         # Stop the simulation immediately
+        stop(node, true)
       end
       # if toc(timeoutStart) > timeout
       #     % Real timeout error occurred
@@ -180,6 +181,18 @@ function run(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = true)
     end
   end
   result
+end
+
+# Similar to run(node) but it catches any exception (error) from Julia and will try to stop the simulation properly before re-throwing the exception.
+# This could be useful for scripts (vs. the REPL) because any runtime exception will cause the script to stop abruptly and the simulation may stuck (of course the SMN may terminate the simulation manually).
+# Alternatively the user can wrap run(node) inside try...catch or try...finally to achieve the same result.
+function runsafe(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = true)
+  try
+    run(node, timeout, stopIfTimeout)
+  catch
+    stop(node, true)
+    rethrow()
+  end
 end
 
 # Stop the simulation.

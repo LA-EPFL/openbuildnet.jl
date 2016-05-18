@@ -7,7 +7,7 @@ OBNUpdateMask, OBNSimTimeType,
 # Node interface
 OBNNode, delete,
 on_block_output, on_block_state, on_init, on_term,
-run, stop, schedule,
+run, runsafe, stop, schedule,
 isstopped, isrunning, iserror,
 sim_time, timeunit, wallclock_time,
 
