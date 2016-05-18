@@ -1,0 +1,68 @@
+// -*- mode: javascript; indent-tabs-mode: nil; -*-
+// receiver node in ONS (OBN Node Script), to be run with the OBN scriptable node program
+
+// IMPORTANT:
+// A function can't access top-level variables unless they are global variables.
+// A function can only access its local variables, its arguments (considered local), and global variables.
+// So for all top-level variables that need to be accessed inside callback functions (e.g. ports), use one or both of the following solutions:
+// 1. Make a variable global by declaring it as: GLOBAL var = ...; then it can be accessed directly inside any function.
+// 2. Define a non-global top-level variable as usual, then bind it to an argument of the function that needs to access it, e.g.
+//     var a = 1.0;
+//     var output = new_output_double("y");
+//     def myfunc(y, my_a) { print(my_a); y.set(my_a); }
+//     callback_updatey(0, bind(myfunc,output,a));
+//
+// Solution (1) is easier to use but less elegant.
+// The general syntax for bind in Chaiscript is: bind(func,arg1,arg2,...) where arg* is either an object or _; the latter causes the corresponding argument in func to be an argument in the new function.
+// Binding, and passing arguments to functions in general, is done via references; therefore any changes to the arguments made by the function are directly applied to the top-level variables (unless the passed arguments are constants). In other words, everything will work as expected, as if the function has direct access to the top-level variables.
+
+set_comm_mqtt("tcp://localhost:1883");
+set_node_name("othernode");
+set_workspace("testext");
+set_timeout(20);	// you can set timeout for the node (in seconds)
+create_node();
+
+// Input ports
+global uScalarDouble = new_input_double("uScalarDouble");
+global uVectorDouble = new_input_double_vector("uVectorDouble");
+global uMatrixDouble = new_input_double_matrix("uMatrixDouble");
+
+// Output ports
+global yScalarDouble = new_output_double("yScalarDouble");
+global yVectorDouble = new_output_double_vector("yVectorDouble");
+global yMatrixDouble = new_output_double_matrix("yMatrixDouble");
+
+// global yVectorDouble2 = new_output_double_vector("yVectorDouble2");
+
+global d = 0.0;
+global v = MatrixD(2,1, [0.0, 0.5]);
+global m = zeros(2,3);
+global vm = MatrixD(2,1, [0.0, 1.0]);
+
+def maincallback() {
+    // Print inputs
+    print("Scalar: ${uScalarDouble.get()}");
+    print("Vector: ${uVectorDouble.get()}");
+    print("Matrix: ${uMatrixDouble.get()}");
+
+    // Write outputs
+    yScalarDouble.set(d); d = d + 1.0;
+    yVectorDouble.set(v); v = v + 1.0;
+    yMatrixDouble.set(m); m = m + 0.5;
+
+    // yVectorDouble2.set(vm); vm = vm + 0.5;
+}
+
+callback_y(0, maincallback);
+
+def my_init() {
+	print("At ${current_time_s()} INIT");
+}
+
+def my_term() {
+	print("At ${current_time_s()} TERMINATED");
+}
+
+// Set the callbacks
+callback_init(my_init);
+callback_term(my_term);

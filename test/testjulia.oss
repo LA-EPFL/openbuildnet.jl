@@ -1,0 +1,42 @@
+// -*- mode: javascript; indent-tabs-mode: nil; -*-
+
+//run_simulation(false);
+settings.time_unit(millisecond);
+settings.final_time(2*second);
+workspace("testext");
+
+settings.default_comm("mqtt");	// Can change the default communication
+
+var othernode = node(
+    ["name" : "othernode",
+	 "inputs" : ["uScalarDouble", "uVectorDouble", "uMatrixDouble"],
+	 "outputs" : ["yScalarDouble", "yVectorDouble", "yMatrixDouble"], // , "yVectorDouble2"
+	 "blocks" : [["sampling" : 1*second, "outputs" : ["yScalarDouble", "yVectorDouble", "yMatrixDouble"]] // , "yVectorDouble2"
+			    ]
+	]);
+
+var extnode = node(
+    ["name" : "extnode",
+	 "inputs" : ["input_scalardouble", "input_vectordouble", "input_matrixdouble"], // , "input_vectordoublestrict"
+	 "outputs" : ["output_scalardouble", "output_vectordouble", "output_matrixdouble"],
+	 "blocks" : [
+         ["sampling" : 1*second,
+          "inputs" : ["input_scalardouble", "input_vectordouble", "input_matrixdouble"], // , "input_vectordoublestrict"
+          "outputs" : ["output_scalardouble", "output_vectordouble", "output_matrixdouble"]
+         ]
+	 ]
+	]);
+
+connect(othernode.port("yScalarDouble"), extnode.port("input_scalardouble"));
+connect(othernode.port("yVectorDouble"), extnode.port("input_vectordouble"));
+connect(othernode.port("yMatrixDouble"), extnode.port("input_matrixdouble"));
+// connect(othernode.port("yVectorDouble"), extnode.port("input_vectordoublestrict"));
+// connect(othernode.port("yVectorDouble2"), extnode.port("input_vectordoublestrict"));
+
+connect(extnode.port("output_scalardouble"), othernode.port("uScalarDouble"));
+connect(extnode.port("output_vectordouble"), othernode.port("uVectorDouble"));
+connect(extnode.port("output_matrixdouble"), othernode.port("uMatrixDouble"));
+
+print_system();
+
+waitfor_all_nodes(30);
