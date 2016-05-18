@@ -121,6 +121,8 @@ _matrix_input_api(::Type{Int64}) = (_api_inputMatrixInt64Get, _api_inputMatrixIn
 _matrix_input_api(::Type{UInt32}) = (_api_inputMatrixUInt32Get, _api_inputMatrixUInt32Release)
 _matrix_input_api(::Type{UInt64}) = (_api_inputMatrixUInt64Get, _api_inputMatrixUInt64Release)
 
+import Base.get
+
 # Read a scalar port, with possibly a default value (in case a strict port has no pending value to read from)
 function get{T}(port::OBNInput{T}, defval = nothing)
   @assert port.node.valid

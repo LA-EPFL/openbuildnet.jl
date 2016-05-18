@@ -1,7 +1,4 @@
-# Runs this script from the ../src folder.
-
-include("../src/openbuildnet.jl")
-importall openbuildnet
+using openbuildnet
 
 # Create the node
 node = OBNNode("extnode", "testext")

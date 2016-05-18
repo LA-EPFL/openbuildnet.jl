@@ -109,6 +109,7 @@ end
 
 # Run simulation
 # Returns: 1 if timeout; 2 if the simulation stopped properly; 3 if stopped with an error
+import Base.run
 function run(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = true)
   @assert node.valid "Node is not valid."
 
@@ -201,6 +202,7 @@ end
 # Here the time is in the clock ticks, i.e., the number of atomic time units from the beginning of the simulation.
 # Returns the status of the request:
 # 0 if successful (accepted), -1 if timeout (failed), -2 if request is invalid, >0 if other errors (failed, see OBN documents for details).
+import Base.schedule
 function schedule(node::OBNNode, blks::OBNUpdateMask, t::OBNSimTimeType, timeout::Number = -1.0)
   @assert node.valid "Node is not valid."
 
