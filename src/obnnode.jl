@@ -187,12 +187,14 @@ end
 # This could be useful for scripts (vs. the REPL) because any runtime exception will cause the script to stop abruptly and the simulation may stuck (of course the SMN may terminate the simulation manually).
 # Alternatively the user can wrap run(node) inside try...catch or try...finally to achieve the same result.
 function runsafe(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = true)
+  result = 3
   try
-    run(node, timeout, stopIfTimeout)
+    result = run(node, timeout, stopIfTimeout)
   catch
     stop(node, true)
     rethrow()
   end
+  result
 end
 
 # Stop the simulation.
@@ -203,11 +205,7 @@ end
 function stop(node::OBNNode, stopnow::Bool = false)
   @assert node.valid "Node is not valid."
 
-  if stopnow
-    result = ccall(_api_nodeStopSimulation, Cint, (Csize_t,), node.node_id)
-  else
-    result = ccall(_api_nodeRequestStopSimulation, Cint, (Csize_t,), node.node_id)
-  end
+  result = stopnow?ccall(_api_nodeStopSimulation, Cint, (Csize_t,), node.node_id):ccall(_api_nodeRequestStopSimulation, Cint, (Csize_t,), node.node_id)
   result == 0
 end
 
