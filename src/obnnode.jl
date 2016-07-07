@@ -15,6 +15,7 @@ type OBNNode
   block_state_cb::Dict{Int64,OBNCallback}
 
   init_cb::OBNCallback
+  restart_cb::OBNCallback
   term_cb::OBNCallback
 
   function OBNNode(name::ASCIIString, workspace::ASCIIString = "", server::ASCIIString = "")
@@ -25,11 +26,12 @@ type OBNNode
     end
 
     obj = new(myid[],
-              true,
-              Dict{Int64,OBNCallback}(),
-              Dict{Int64,OBNCallback}(),
-              OBNCallback(),
-              OBNCallback())
+              true,                         # valid
+              Dict{Int64,OBNCallback}(),    # output Callbacks
+              Dict{Int64,OBNCallback}(),    # state callbacks
+              OBNCallback(),                # init callback
+              OBNCallback(),                # restart callback
+              OBNCallback())                # terminate callback
     finalizer(obj, x -> delete(x))
     obj
   end
@@ -71,6 +73,12 @@ function on_init(f::Function, node::OBNNode, optargs...)
   @assert node.valid "Node is not valid."
 
   node.init_cb = OBNCallback( (f, optargs) )
+end
+
+function on_restart(f::Function, node::OBNNode, optargs...)
+  @assert node.valid "Node is not valid."
+
+  node.restart_cb = OBNCallback( (f, optargs) )
 end
 
 function on_term(f::Function, node::OBNNode, optargs...)
@@ -140,9 +148,19 @@ function run(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = true)
       elseif event_type[] == OBNEI_Event_X
         do_updatex(node, event_args[].mask)
       elseif event_type[] == OBNEI_Event_INIT
-        node.init_cb()
+        event_result = node.init_cb()
+        if isa(event_result, Integer)
+          # Set the event result to OBN
+          ccall(_api_simSetEventResult, Cint, (Csize_t, Int64), node.node_id, event_result)
+        end
       elseif event_type[] == OBNEI_Event_TERM
         node.term_cb()
+      elseif event_type[] == OBNEI_Event_RESTART
+        event_result = node.restart_cb()
+        if isa(event_result, Integer)
+          # Set the event result to OBN
+          ccall(_api_simSetEventResult, Cint, (Csize_t, Int64), node.node_id, event_result)
+        end
       elseif event_type[] == OBNEI_Event_RCV
         # Port's RCV event
         #     assert(this(k).obnnode_callback_portrcvd.isKey(evargs),...

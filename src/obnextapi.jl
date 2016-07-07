@@ -31,6 +31,7 @@ const OBNEI_Event_Y = convert(OBNEI_EventType, 1)
 const OBNEI_Event_X = convert(OBNEI_EventType, 2)
 const OBNEI_Event_TERM = convert(OBNEI_EventType, 3)
 const OBNEI_Event_RCV = convert(OBNEI_EventType, 4)
+const OBNEI_Event_RESTART = convert(OBNEI_EventType, 5)
 
 # Type to pass arguments of an event (C struct)
 immutable OBNEI_EventArg
@@ -53,6 +54,7 @@ const _api_nodeWallClockTime = Libdl.dlsym(libobnext::Ptr{Void}, :nodeWallClockT
 const _api_nodeTimeUnit = Libdl.dlsym(libobnext::Ptr{Void}, :nodeTimeUnit)
 
 const _api_simRunStep = Libdl.dlsym(libobnext::Ptr{Void}, :simRunStep)
+const _api_simSetEventResult = Libdl.dlsym(libobnext::Ptr{Void}, :simSetEventResult)
 const _api_simRequestFutureUpdate = Libdl.dlsym(libobnext::Ptr{Void}, :simRequestFutureUpdate)
 
 # Port interface
