@@ -5,10 +5,15 @@ typealias OBNCallback Tuple{Function,Tuple}
 Base.call(f::OBNCallback) = f[1](f[2]...) # Make the callback callable
 OBNCallback() = OBNCallback((() -> nothing, ()))
 
+typealias InputPortDict Dict{Cint,OBNInputAbstract}
+
 # An openBuildNet node
 type OBNNode
   node_id::Csize_t
   valid::Bool
+
+  # Dictionary of input ports
+  input_ports::InputPortDict
 
   # Callbacks
   block_output_cb::Dict{Int64,OBNCallback}
@@ -25,8 +30,9 @@ type OBNNode
       error("Error creating openBuildNet node [$result]: ", lastErrorMessage())
     end
 
-    obj = new(myid[],
+    obj = new(myid[],                       # id
               true,                         # valid
+              InputPortDict(),              # dictionary of input ports
               Dict{Int64,OBNCallback}(),    # output Callbacks
               Dict{Int64,OBNCallback}(),    # state callbacks
               OBNCallback(),                # init callback
@@ -115,10 +121,17 @@ function do_updatex(node::OBNNode, mask::OBNUpdateMask)
   end
 end
 
-# Run simulation
-# if stopIfTimeout is true [default], the node will automatically  stop if there is a timeout error
-# Returns: 1 if timeout; 2 if the simulation stopped properly; 3 if stopped with an error
 import Base.run
+
+"""
+    run(OBNNode, timeout, stopIfTimeout)
+
+Run simulation
+
+If stopIfTimeout is true [default], the node will automatically  stop if there is a timeout error
+
+Returns: 1 if timeout; 2 if the simulation stopped properly; 3 if stopped with an error
+"""
 function run(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = true)
   @assert node.valid "Node is not valid."
 
@@ -163,11 +176,12 @@ function run(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = true)
         end
       elseif event_type[] == OBNEI_Event_RCV
         # Port's RCV event
-        #     assert(this(k).obnnode_callback_portrcvd.isKey(evargs),...
-        #            ['Internal error: input port id %d does not exist for RCV ' ...
-        #             'event.'], evargs);
-        #     thecallback = this(k).obnnode_callback_portrcvd(evargs);
-        #     feval(thecallback{:});
+        portid = Cint(event_args[].index)
+        if haskey(node.input_ports, portid)
+          node.input_ports[portid].rcv_cb()
+        else
+          warn("Input port $portid does not exist.")
+        end
       else
         error("Internal error: Unknown event type.")
       end
@@ -205,6 +219,8 @@ end
 # This could be useful for scripts (vs. the REPL) because any runtime exception will cause the script to stop abruptly and the simulation may stuck (of course the SMN may terminate the simulation manually).
 # Alternatively the user can wrap run(node) inside try...catch or try...finally to achieve the same result.
 function runsafe(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = true)
+  @assert node.valid "Node is not valid."
+
   result = 3
   try
     result = run(node, timeout, stopIfTimeout)
@@ -213,6 +229,37 @@ function runsafe(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = tr
     rethrow()
   end
   result
+end
+
+# Wait for and process the next port event (by executing its callback), up until a given
+# timeout (in seconds, can be non-positive for no timeout).
+# Returns true if an event has been processed; false otherwise (timeout).
+# This method is useful for event-triggered processing inside another callback.
+function process_port_events(node::OBNNode, timeout::Number = -1.0)
+  @assert node.valid "Node is not valid."
+
+  # Get the next port event
+  event_type = Ref{OBNEI_EventType}()
+  portid = Ref{Csize_t}()
+  result = ccall(_api_simGetPortEvent, Cint, (Csize_t, Cdouble, Ref{OBNEI_EventType}, Ref{Csize_t}), node.node_id, timeout, event_type, portid)
+
+  if result != 0
+    return false
+  end
+
+  if event_type[] == OBNEI_Event_RCV
+    # A message received at a port
+    if haskey(node.input_ports, portid[])
+      node.input_ports[portid[]].rcv_cb()
+    else
+      warn("Input port $(portid[]) does not exist.")
+      return false
+    end
+  else
+    # An unexpected event is returned -> error
+    error("Internal error: unexpected event type $(event_type[]).")
+  end
+  return true
 end
 
 # Stop the simulation.

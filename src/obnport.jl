@@ -1,17 +1,20 @@
 # Interface for openBuildNet's ports
 
-abstract OBNPort
-
-# A (physical) input port, parameterized by the value type
-abstract OBNInputAbstract <: OBNPort
 type OBNInput{T} <: OBNInputAbstract
   name::ASCIIString
   node::OBNNode
   portid::Cint
   strict::Bool
+  rcv_cb::OBNCallback    # Callback for message receive
+
+  function OBNInput(name::ASCIIString, node::OBNNode, portid::Cint, strict::Bool)
+    obj = new(name, node, portid, strict, OBNCallback())
+    node.input_ports[portid] = obj    # Add the input port object to the node, so we can refer to it later on
+    finalizer(obj, x -> delete!(x.node.input_ports, x.portid))  # Remove the port from node if it's deleted
+    obj
+  end
 end
 
-abstract OBNOutputAbstract <: OBNPort
 type OBNOutput{T} <: OBNOutputAbstract
   name::ASCIIString
   node::OBNNode
@@ -236,6 +239,11 @@ function sendsync(port::OBNOutputAbstract)
   result == 0
 end
 
+function sendsync(port::OBNOutputAbstract, val)
+  set(port, val)
+  sendsync(port)
+end
+
 _scalar_output_api(::Type{Float64}) = _api_outputScalarDoubleSet
 _scalar_output_api(::Type{Int32}) = _api_outputScalarInt32Set
 _scalar_output_api(::Type{Int64}) = _api_outputScalarInt64Set
@@ -262,6 +270,7 @@ function set{T}(port::OBNOutput{T}, val::T)
   if result < 0
     error("Error writing to output [$result]: ", lastErrorMessage())
   end
+  result
 end
 
 # function set(port::OBNOutput{Bool}, val::Bool)
@@ -281,6 +290,7 @@ function set{T}(port::OBNOutput{Vector{T}}, val::Vector{T})
   if result < 0
     error("Error writing to output [$result]: ", lastErrorMessage())
   end
+  result
 end
 
 # Write to a matrix port
@@ -292,6 +302,7 @@ function set{T}(port::OBNOutput{Matrix{T}}, val::Matrix{T})
   if result < 0
     error("Error writing to output [$result]: ", lastErrorMessage())
   end
+  result
 end
 
 # Query if a port has a pending value
@@ -320,4 +331,17 @@ function portinfo(port::OBNPort)
     error("Error getting port information [$result]: ", lastErrorMessage())
   end
   info[]
+end
+
+# Callback when a message is received on an input port
+# Returns true if successful
+function on_receive(f::Function, port::OBNInputAbstract, optargs...)
+  @assert port.node.valid
+  result = ccall(_api_portEnableRcvEvent, Cint, (Csize_t, Csize_t), port.node.node_id, port.portid)
+  if result == 0
+    port.rcv_cb = OBNCallback( (f, optargs) )
+    return true
+  else
+    return false
+  end
 end

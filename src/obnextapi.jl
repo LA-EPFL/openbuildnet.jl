@@ -53,6 +53,7 @@ const _api_nodeSimulationTime = Libdl.dlsym(libobnext::Ptr{Void}, :nodeSimulatio
 const _api_nodeWallClockTime = Libdl.dlsym(libobnext::Ptr{Void}, :nodeWallClockTime)
 const _api_nodeTimeUnit = Libdl.dlsym(libobnext::Ptr{Void}, :nodeTimeUnit)
 
+const _api_simGetPortEvent = Libdl.dlsym(libobnext::Ptr{Void}, :simGetPortEvent)
 const _api_simRunStep = Libdl.dlsym(libobnext::Ptr{Void}, :simRunStep)
 const _api_simSetEventResult = Libdl.dlsym(libobnext::Ptr{Void}, :simSetEventResult)
 const _api_simRequestFutureUpdate = Libdl.dlsym(libobnext::Ptr{Void}, :simRequestFutureUpdate)
