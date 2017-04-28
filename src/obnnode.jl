@@ -207,7 +207,7 @@ function run(node::OBNNode, timeout::Number = -1.0, stopIfTimeout::Bool = true)
       # disp(['Simulation of node ' this(k).obnnode_nodeName ' has stopped properly.']);
     elseif result == 3
       # Stop with error
-      warn("Simulation has stopped due to an error.")
+      warn("Simulation has stopped due to an error: ", lastErrorMessage())
     else
       error("Internal error: Unknown running state ", result)
     end
