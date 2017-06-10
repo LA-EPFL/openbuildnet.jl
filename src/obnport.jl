@@ -1,13 +1,13 @@
 # Interface for openBuildNet's ports
 
 type OBNInput{T} <: OBNInputAbstract
-  name::ASCIIString
+  name::String
   node::OBNNode
   portid::Cint
   strict::Bool
   rcv_cb::OBNCallback    # Callback for message receive
 
-  function OBNInput(name::ASCIIString, node::OBNNode, portid::Cint, strict::Bool)
+  function OBNInput(name::String, node::OBNNode, portid::Cint, strict::Bool)
     obj = new(name, node, portid, strict, OBNCallback())
     node.input_ports[portid] = obj    # Add the input port object to the node, so we can refer to it later on
     finalizer(obj, x -> delete!(x.node.input_ports, x.portid))  # Remove the port from node if it's deleted
@@ -16,7 +16,7 @@ type OBNInput{T} <: OBNInputAbstract
 end
 
 type OBNOutput{T} <: OBNOutputAbstract
-  name::ASCIIString
+  name::String
   node::OBNNode
   portid::Cint
 end
@@ -66,7 +66,7 @@ const OBNEI_Format_ProtoBuf = convert(OBNEI_FormatType, 0)
 
 # Create an input / output port on a node
 # Currently only ProtoBuf (format = :PB) is supported
-function create_input(node::OBNNode, name::ASCIIString, T::DataType, strict::Bool = false, format::Symbol = :PB)
+function create_input(node::OBNNode, name::String, T::DataType, strict::Bool = false, format::Symbol = :PB)
   @assert node.valid "Not allowed to create ports on non-valid node."
 
   if format == :PB || format == :ProtoBuf
@@ -84,7 +84,7 @@ function create_input(node::OBNNode, name::ASCIIString, T::DataType, strict::Boo
   end
 end
 
-function create_output(node::OBNNode, name::ASCIIString, T::DataType, format::Symbol = :PB)
+function create_output(node::OBNNode, name::String, T::DataType, format::Symbol = :PB)
   @assert node.valid "Not allowed to create ports on non-valid node."
 
   if format == :PB || format == :ProtoBuf
@@ -314,7 +314,7 @@ end
 
 # Connect a given port to an input port
 # Returns true if successful; check lastErrorMessage() otherwise
-function connectfrom(port::OBNInputAbstract, other::ASCIIString)
+function connectfrom(port::OBNInputAbstract, other::String)
   @assert port.node.valid
   result = ccall(_api_portConnect, Cint, (Csize_t, Csize_t, Cstring), port.node.node_id, port.portid, other)
   result == 0

@@ -23,7 +23,7 @@ type OBNNode
   restart_cb::OBNCallback
   term_cb::OBNCallback
 
-  function OBNNode(name::ASCIIString, workspace::ASCIIString = "", server::ASCIIString = "")
+  function OBNNode(name::String, workspace::String = "", server::String = "")
     myid = Ref{Csize_t}(0)  # To receive the node id
     result = ccall(_api_createOBNNode, Cint, (Cstring, Cstring, Cstring, Ref{Csize_t}), name, workspace, server, myid)
     if result != 0
