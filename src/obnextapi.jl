@@ -50,6 +50,7 @@ const _api_nodeIsError = Libdl.dlsym(libobnext::Ptr{Void}, :nodeIsError)
 const _api_nodeIsRunning = Libdl.dlsym(libobnext::Ptr{Void}, :nodeIsRunning)
 
 const _api_nodeSimulationTime = Libdl.dlsym(libobnext::Ptr{Void}, :nodeSimulationTime)
+const _api_nodeSimulationTimeTicks = Libdl.dlsym(libobnext::Ptr{Void}, :nodeSimulationTimeTicks)
 const _api_nodeWallClockTime = Libdl.dlsym(libobnext::Ptr{Void}, :nodeWallClockTime)
 const _api_nodeTimeUnit = Libdl.dlsym(libobnext::Ptr{Void}, :nodeTimeUnit)
 

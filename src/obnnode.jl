@@ -2,7 +2,8 @@
 
 # A callback = a function + optional arguments in a tuple
 typealias OBNCallback Tuple{Function,Tuple}
-Base.call(f::OBNCallback) = f[1](f[2]...) # Make the callback callable
+#Base.call(f::OBNCallback) = f[1](f[2]...) # Make the callback callable
+(f::OBNCallback)() = f[1](f[2]...) # Make the callback callable
 OBNCallback() = OBNCallback((() -> nothing, ()))
 
 typealias InputPortDict Dict{Cint,OBNInputAbstract}
@@ -311,10 +312,14 @@ function schedule(node::OBNNode, blks::OBNUpdateMask, t::DateTime, timeout::Numb
 end
 
 # Get current simulation time in given unit
-# Possible units as symbols: us, ms, s, m, h
+# Possible units as symbols: us, ms, s, m, h, t (for atomic ticks)
 function sim_time(node::OBNNode, unit::Symbol = :s)
   @assert node.valid "Node is not valid."
 
+  if unit == :t
+    return sim_time_ticks(node)
+  end
+    
   # Time unit: 0 = second, -1 = millisecond, -2 = microsecond, 1 = minute, 2 = hour
   const timeunits = Dict{Symbol,Cint}(:s => 0, :ms => -1, :us => -2, :m => 1, :h => 2)
   @assert haskey(timeunits, unit) "Invalid time unit."
@@ -323,6 +328,18 @@ function sim_time(node::OBNNode, unit::Symbol = :s)
   result = ccall(_api_nodeSimulationTime, Cint, (Csize_t, Cint, Ref{Cdouble}), node.node_id, timeunits[unit], curtime)
   if result != 0
     error("Error querying the simulation time [$result]: ", lastErrorMessage())
+  end
+  curtime[]
+end
+
+# Get current simulation time in atomic time ticks
+function sim_time_ticks(node::OBNNode)
+  @assert node.valid "Node is not valid."
+
+  curtime = Ref{OBNSimTimeType}(0)
+  result = ccall(_api_nodeSimulationTimeTicks, Cint, (Csize_t, Ref{OBNSimTimeType}), node.node_id, curtime)
+  if result != 0
+    error("Error querying the simulation time ticks [$result]: ", lastErrorMessage())
   end
   curtime[]
 end
