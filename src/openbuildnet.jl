@@ -9,7 +9,7 @@ OBNNode, delete,
 on_block_output, on_block_state, on_init, on_term, on_restart,
 run, runsafe, process_port_events, stop, schedule,
 isstopped, isrunning, iserror,
-sim_time, timeunit, wallclock_time,
+sim_time, sim_time_ticks, timeunit, wallclock_time,
 
 # Port interface
 OBNPort, OBNInputAbstract, OBNOutputAbstract, OBNInput, OBNOutput,
