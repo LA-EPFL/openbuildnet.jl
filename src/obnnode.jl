@@ -275,6 +275,21 @@ function stop(node::OBNNode, stopnow::Bool = false)
   result == 0
 end
 
+# Converts a given time value in a given unit (default: seconds) to clock ticks.
+# Valid units are :s, :m, :h, :ms, :us, :t (clock ticks -> returns the given time value immediately)
+# Return type is OBNSimTimeType
+function to_ticks(node::OBNNode, t::Number, tu::Symbol = :s)
+  if tu == :t
+    return t
+  end
+  
+  atomictu = timeunit(node)
+
+  # Convert t to clock ticks
+  const tu_scale = Dict{Symbol,Float64}(:s => 1e6, :ms => 1e3, :us => 1, :m => 60*1e6, :h => 60*60*1e6)
+  ceil(OBNSimTimeType, t*tu_scale[tu] / atomictu)
+end
+
 # Requests a triggering (i.e., update) of certain blocks at a future time (in clock ticks)
 # Here the time is in the clock ticks, i.e., the number of atomic time units from the beginning of the simulation.
 # Returns the status of the request:
@@ -291,13 +306,7 @@ end
 # Valid units are :s, :m, :h, :ms, :us
 # This function converts the future time to the atomic clock ticks and call the default method
 function schedule(node::OBNNode, blks::OBNUpdateMask, t::Number, tu::Symbol = :s, timeout::Number = -1.0)
-  atomictu = timeunit(node)
-
-  # Convert t to clock ticks
-  const tu_scale = Dict{Symbol,Float64}(:s => 1e6, :ms => 1e3, :us => 1, :m => 60*1e6, :h => 60*60*1e6)
-  clkticks = ceil(OBNSimTimeType, t*tu_scale[tu] / atomictu)
-
-  schedule(node, blks, clkticks, timeout)
+  schedule(node, blks, to_ticks(node, t, tu), timeout)
 end
 
 # Requests a triggering (i.e., update) of certain blocks at a future time.
