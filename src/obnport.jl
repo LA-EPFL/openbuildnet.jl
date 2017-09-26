@@ -111,18 +111,21 @@ _scalar_input_api(::Type{Int32}) = _api_inputScalarInt32Get
 _scalar_input_api(::Type{Int64}) = _api_inputScalarInt64Get
 _scalar_input_api(::Type{UInt32}) = _api_inputScalarUInt32Get
 _scalar_input_api(::Type{UInt64}) = _api_inputScalarUInt64Get
+_scalar_input_api(::Type{Bool}) = _api_inputScalarBoolGet
 
 _vector_input_api(::Type{Float64}) = (_api_inputVectorDoubleGet, _api_inputVectorDoubleRelease)
 _vector_input_api(::Type{Int32}) = (_api_inputVectorInt32Get, _api_inputVectorInt32Release)
 _vector_input_api(::Type{Int64}) = (_api_inputVectorInt64Get, _api_inputVectorInt64Release)
 _vector_input_api(::Type{UInt32}) = (_api_inputVectorUInt32Get, _api_inputVectorUInt32Release)
 _vector_input_api(::Type{UInt64}) = (_api_inputVectorUInt64Get, _api_inputVectorUInt64Release)
+_vector_input_api(::Type{Bool}) = (_api_inputVectorBoolGet, _api_inputVectorBoolRelease)
 
 _matrix_input_api(::Type{Float64}) = (_api_inputMatrixDoubleGet, _api_inputMatrixDoubleRelease)
 _matrix_input_api(::Type{Int32}) = (_api_inputMatrixInt32Get, _api_inputMatrixInt32Release)
 _matrix_input_api(::Type{Int64}) = (_api_inputMatrixInt64Get, _api_inputMatrixInt64Release)
 _matrix_input_api(::Type{UInt32}) = (_api_inputMatrixUInt32Get, _api_inputMatrixUInt32Release)
 _matrix_input_api(::Type{UInt64}) = (_api_inputMatrixUInt64Get, _api_inputMatrixUInt64Release)
+_matrix_input_api(::Type{Bool}) = (_api_inputMatrixBoolGet, _api_inputMatrixBoolRelease)
 
 import Base.get
 
@@ -249,18 +252,21 @@ _scalar_output_api(::Type{Int32}) = _api_outputScalarInt32Set
 _scalar_output_api(::Type{Int64}) = _api_outputScalarInt64Set
 _scalar_output_api(::Type{UInt32}) = _api_outputScalarUInt32Set
 _scalar_output_api(::Type{UInt64}) = _api_outputScalarUInt64Set
+_scalar_output_api(::Type{Bool}) = _api_outputScalarBoolSet
 
 _vector_output_api(::Type{Float64}) = _api_outputVectorDoubleSet
 _vector_output_api(::Type{Int32}) = _api_outputVectorInt32Set
 _vector_output_api(::Type{Int64}) = _api_outputVectorInt64Set
 _vector_output_api(::Type{UInt32}) = _api_outputVectorUInt32Set
 _vector_output_api(::Type{UInt64}) = _api_outputVectorUInt64Set
+_vector_output_api(::Type{Bool}) = _api_outputVectorBoolSet
 
 _matrix_output_api(::Type{Float64}) = _api_outputMatrixDoubleSet
 _matrix_output_api(::Type{Int32}) = _api_outputMatrixInt32Set
 _matrix_output_api(::Type{Int64}) = _api_outputMatrixInt64Set
 _matrix_output_api(::Type{UInt32}) = _api_outputMatrixUInt32Set
 _matrix_output_api(::Type{UInt64}) = _api_outputMatrixUInt64Set
+_matrix_output_api(::Type{Bool}) = _api_outputMatrixBoolSet
 
 # Write to a scalar port
 function set{T}(port::OBNOutput{T}, val::T)
